@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lesioni epatiche – Fegato non cirrotico (Concisa + Rare + MRI estesa)</title>
+  <meta name="description" content="Supporto decisionale conciso per lesioni epatiche in fegato non cirrotico, con reperti MRI estesi (T1, T2, DWI, CE, HBP) e inclusione di entità rare.">
+  <style>
+    :root{ --bg:#f8fafc; --card:#fff; --muted:#6b7280; --ring:#e5e7eb; --primary:#0f766e; }
+    *{ box-sizing:border-box }
+    html, body, #root{ height:100% }
+    body{ margin:0; background:linear-gradient(180deg, var(--bg), #fff); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial, sans-serif; color:#0b1020 }
+    .container{ max-width:1000px; margin:24px auto; padding:0 16px }
+    .header{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px }
+    h1{ margin:0; font-size:clamp(20px,2.2vw,28px) }
+    .small{ color:var(--muted); font-size:14px }
+    .row{ display:grid; grid-template-columns: 240px 1fr; gap:12px; align-items:center; margin:8px 0 }
+    .row label{ color:var(--muted); font-size:14px; text-align:right; padding-right:8px }
+    .card{ background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px }
+    .grid{ display:grid; gap:16px }
+    .grid-2{ grid-template-columns: 1fr 1fr }
+    .grid-3{ grid-template-columns: 1fr 1fr 1fr }
+    .badge{ display:inline-block; padding:4px 8px; border-radius:999px; border:1px solid var(--ring); font-size:12px; background:#f9fafb }
+    .btn{ appearance:none; border:1px solid var(--ring); background:#fff; padding:8px 12px; border-radius:10px; cursor:pointer }
+    .btn.primary{ background:var(--primary); color:#fff; border-color:transparent }
+    .input, select, textarea{ width:100%; padding:8px 10px; border:1px solid var(--ring); border-radius:8px; font:inherit }
+    .progress{ height:8px; background:#eef2f7; border-radius:8px; overflow:hidden }
+    .progress > div{ height:8px; background:var(--primary) }
+    .footer{ color:var(--muted); font-size:12px; text-align:center; padding:16px 0 }
+    .tabs{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px }
+    .tab{ padding:6px 10px; border:1px solid var(--ring); border-radius:999px; background:#fff; cursor:pointer }
+    .tab.active{ background:var(--primary); color:#fff; border-color:transparent }
+    .hidden{ display:none }
+    ul.clean{ list-style:none; padding:0; margin:0 }
+    ul.clean li{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:6px 0 }
+    .help{ font-size:13px; color:#475569 }
+    .switch{ display:inline-flex; align-items:center; gap:8px; user-select:none }
+    .checkline{ display:flex; align-items:center; gap:8px }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+const { useState, useMemo } = React
+
+function defaultFeatures(){
+  return {
+    eta: 50, sesso: "M",
+    contestoOncologico: false,
+    febbreLeucocitosi: false,
+    dolore: false,
+    ALT_ALP_alte: false,
+
+    dimensioni_mm: 20,
+    numero_lesioni: "singola",
+
+    // Dinamica CE
+    APHE_nonRim: false,
+    APHE_rim: false,
+    washout: false,
+    capsula: false,
+    rim_enhancement: false,
+    progressivo_fillin: false,
+    centrale_scar: false,
+    targetoid: false,
+    tardivo_fibroso: false, // impregnamento ritardato fibroso
+    persistenza_tardiva: false, // persistenza enhancement senza washout
+
+    // T2
+    T2_molto_iperintensa: false,
+    T2_moderata: false,
+    T2_ipointensa_fibrosa: false,
+    T2_alone_periferico: false, // halo/iperrim
+
+    // DWI
+    DWI_restrizione: false,
+    DWI_rim: false, // restrizione periferica a corona
+
+    // T1
+    T1_ipointensa: false,
+    T1_ipersistente: false,
+    T1_iperintensa: false,
+    T1_drop_fatsat: false, // caduta su out-of-phase (grasso)
+    T1_emorragia: false, // alto T1 ematico/proteico
+
+    // HBP
+    HBP_disponibile: false,
+    HBP_iso_iperdiffusa: false,
+    HBP_ipointensa: false,
+
+    // Extra
+    grasso_intralesionale: false,
+    emorragia: false,
+    calcificazioni: false,
+  }
+}
+
+const LABELS = {
+  cisti: "Cisti semplice",
+  emangioma: "Emangioma",
+  FNH: "Iperplasia nodulare focale (FNH)",
+  adenoma_HNF1A: "Adenoma epatico (HNF1A-mutato)",
+  adenoma_infiammatorio: "Adenoma epatico (infiammatorio)",
+  adenoma_beta_catenina: "Adenoma epatico (β-catenina)",
+  HCC_non_cirrotico: "Epatocarcinoma (in fegato non cirrotico)",
+  metastasi: "Metastasi",
+  ascesso: "Ascesso",
+  colangiocarcinoma_intraepatico: "Colangiocarcinoma intraepatico",
+  pseudolesione_grasso: "Pseudolesione (focale steatosi/risparmio)",
+  SNN: "Nodulo necrotico solitario (SNN)",
+  HEHE: "Emangioendotelioma epitelioide (HEHE)",
+  PECOMA: "PEComa epatico"
+}
+
+function scoreRules(f){
+  const scores = {
+    cisti:0, emangioma:0, FNH:0,
+    adenoma_HNF1A:0, adenoma_infiammatorio:0, adenoma_beta_catenina:0,
+    HCC_non_cirrotico:0, metastasi:0, ascesso:0, colangiocarcinoma_intraepatico:0,
+    pseudolesione_grasso:0, SNN:0, HEHE:0, PECOMA:0
+  }
+  const add = (k,p)=> scores[k]+=p
+
+  // --- CISTI ---
+  if (!f.APHE_nonRim && !f.APHE_rim && !f.rim_enhancement && !f.washout && !f.progressivo_fillin && f.T2_molto_iperintensa && !f.DWI_restrizione && !f.T1_iperintensa) add("cisti",9)
+  if (f.dimensioni_mm < 30 && f.numero_lesioni==="singola" && f.T2_molto_iperintensa && !f.APHE_nonRim) add("cisti",2)
+
+  // --- EMANGIOMA --- (T2 molto alta + fill-in centripeto + no washout)
+  if (f.T2_molto_iperintensa && f.progressivo_fillin && !f.washout) add("emangioma",9)
+  if (!f.washout && !f.rim_enhancement && f.progressivo_fillin) add("emangioma",4)
+  if (f.persistenza_tardiva && f.progressivo_fillin) add("emangioma",2)
+
+  // --- FNH --- (APHE non-rim, HBP iso/iper, cicatrice centrale)
+  if (f.APHE_nonRim && !f.washout && (f.HBP_iso_iperdiffusa || f.centrale_scar)) add("FNH",9)
+  if (f.HBP_disponibile && f.HBP_iso_iperdiffusa) add("FNH",4)
+  if (f.centrale_scar && f.T2_moderata && f.T1_ipointensa) add("FNH",1)
+
+  // --- ADENOMI ---
+  if (f.grasso_intralesionale || f.T1_drop_fatsat) add("adenoma_HNF1A",5)
+  if (f.APHE_nonRim && !f.washout && f.HBP_ipointensa && !f.centrale_scar) add("adenoma_infiammatorio",4)
+  if (f.emorragia || f.T1_emorragia || f.T1_iperintensa) add("adenoma_infiammatorio",3)
+  if (f.APHE_nonRim && (f.HBP_iso_iperdiffusa || (!f.HBP_disponibile && f.persistenza_tardiva))) add("adenoma_beta_catenina",3)
+
+  // --- HCC NON CIRROTICO ---
+  if (f.APHE_nonRim && f.washout && (f.capsula || f.tardivo_fibroso)) add("HCC_non_cirrotico",7)
+  if (f.APHE_nonRim && f.washout && !f.contestoOncologico) add("HCC_non_cirrotico",3)
+  if (f.T2_moderata && f.T1_ipointensa && f.DWI_restrizione) add("HCC_non_cirrotico",2)
+
+  // --- METASTASI ---
+  if (f.contestoOncologico) add("metastasi",4)
+  if (f.numero_lesioni==="multiple") add("metastasi",3)
+  if (f.rim_enhancement || f.targetoid || f.APHE_rim) add("metastasi",4)
+  if (f.DWI_restrizione || f.DWI_rim) add("metastasi",2)
+  if (f.HBP_disponibile && f.HBP_ipointensa) add("metastasi",2)
+
+  // --- ASCESSO ---
+  if (f.febbreLeucocitosi && (f.DWI_restrizione || f.DWI_rim)) add("ascesso",7)
+  if (f.dolore && (f.rim_enhancement || f.APHE_rim) && f.T2_alone_periferico) add("ascesso",2)
+  if (f.T1_ipointensa && f.T2_moderata && f.APHE_rim) add("ascesso",1)
+
+  // --- ICC ---
+  if ((f.rim_enhancement || f.APHE_rim) && f.targetoid && !f.capsula) add("colangiocarcinoma_intraepatico",7)
+  if (f.tardivo_fibroso && (f.rim_enhancement || f.APHE_rim)) add("colangiocarcinoma_intraepatico",3)
+
+  // --- PSEUDOLESIONE GRASSO ---
+  if ((f.grasso_intralesionale || f.T1_drop_fatsat) && !f.washout && !f.rim_enhancement && !f.DWI_restrizione) add("pseudolesione_grasso",4)
+
+  // --- RARE ---
+  // SNN: singola piccola, T1 ipointensa, T2 ipo/iso con alone, rim enhancement sottile, possibili calcificazioni, no washout
+  if (f.numero_lesioni==="singola" && f.dimensioni_mm<=30 && f.T1_ipointensa && !f.APHE_nonRim && (f.APHE_rim || f.rim_enhancement) && !f.washout) add("SNN",7)
+  if (f.T2_alone_periferico && !f.progressivo_fillin) add("SNN",2)
+  if (f.calcificazioni) add("SNN",1)
+
+  // HEHE: multiple, targetoid, rim enhancement, HBP ipointensa, DWI rim; talvolta ritardato fibroso
+  if (f.numero_lesioni==="multiple" && (f.targetoid || f.APHE_rim) && (f.rim_enhancement || f.DWI_rim)) add("HEHE",6)
+  if (f.HBP_disponibile && f.HBP_ipointensa) add("HEHE",2)
+  if (f.tardivo_fibroso) add("HEHE",1)
+
+  // PEComa: singola ipervascolare, grasso intralesionale o drop, HBP ipointensa; T2 moderata/alta
+  if (f.numero_lesioni==="singola" && f.APHE_nonRim && (f.grasso_intralesionale || f.T1_drop_fatsat)) add("PECOMA",6)
+  if (f.HBP_disponibile && f.HBP_ipointensa) add("PECOMA",2)
+  if (f.T2_moderata || f.T2_molto_iperintensa) add("PECOMA",1)
+
+  // Penalità/raffinamenti globali
+  if (f.HBP_disponibile && f.HBP_iso_iperdiffusa) {
+    scores.metastasi -= 3; scores.cisti -= 2; scores.HEHE -= 1
+  }
+  if (f.dimensioni_mm < 15 && f.numero_lesioni === "singola") {
+    scores.metastasi -= 1; scores.colangiocarcinoma_intraepatico -= 1; scores.HEHE -= 1
+  }
+  if (f.contestoOncologico) {
+    scores.FNH -= 1; scores.adenoma_HNF1A -= 1; scores.adenoma_infiammatorio -= 1; scores.PECOMA -= 1; scores.SNN -= 1
+  }
+  return scores
+}
+
+function pctRanked(scores){
+  const entries = Object.entries(scores)
+  const min = Math.min(...entries.map(([,v])=>v))
+  const shifted = entries.map(([k,v])=>[k, v - Math.min(0,min)])
+  const sum = shifted.reduce((a,[,v])=>a+v,0) || 1
+  return shifted.map(([k,v])=>[k, Math.round((v/sum)*100)]).sort((a,b)=>b[1]-a[1])
+}
+
+function confLabel(p){ return p>=70? "alta" : p>=50? "moderata" : "bassa" }
+
+function buildConclusione(top){
+  const [k1,p1] = top[0] || []
+  const [k2,p2] = top[1] || []
+
+  if (!k1) return "Dati insufficienti per conclusioni affidabili."
+  if (p1>=65 && (!k2 || (p1 - (p2||0) >= 25) || p2<25)) {
+    return `Nel contesto di fegato non cirrotico, i reperti sono compatibili con ${LABELS[k1]} (confidenza ${confLabel(p1)}). Correlare con quadro clinico e laboratoristico.`
+  }
+  if (p1>=50 && k2 && p2>=25){
+    return `Compatibile con ${LABELS[k1]} (confidenza ${confLabel(p1)}) con alternativa ${LABELS[k2]} (confidenza ${confLabel(p2)}). Correlare clinicamente.`
+  }
+  return `Diagnosi principale: ${LABELS[k1]} (confidenza ${confLabel(p1)}). Considerare integrazione dati (histologia/Follow-up).`
+}
+
+function Row({label, children}){
+  return (<div className="row"><label>{label}</label><div>{children}</div></div>)
+}
+
+function App(){
+  const [features, setFeatures] = useState(defaultFeatures())
+  const [note, setNote] = useState("")
+  const [tab, setTab] = useState("paz")
+  const [concisa, setConcisa] = useState(true) // concisa ON
+
+  const scores = useMemo(()=>scoreRules(features), [features])
+  const ranked = useMemo(()=>pctRanked(scores), [scores])
+
+  // Filtraggio conciso: max 2 diagnosi ≥25% (altrimenti solo la principale)
+  const conciseList = useMemo(()=>{
+    const top = ranked.slice(0,5) // consideriamo fino a 5 per includere rare
+    const filtered = top.filter(([,p]) => p>=25).slice(0,2)
+    return filtered.length ? filtered : top.slice(0,1)
+  }, [ranked])
+
+  const topShown = concisa ? conciseList : ranked
+  const conclusione = useMemo(()=> buildConclusione(conciseList), [conciseList])
+  const setF = (k,v)=> setFeatures(prev=>({...prev,[k]:v}))
+
+  return (
+    <div className="container">
+      <div className="header">
+        <div>
+          <h1>Lesioni epatiche (non cirrotico) – Concisa + Rare + MRI estesa</h1>
+          <p className="small">T1/T2/DWI/CE/HBP dettagliati. Non sostituisce il giudizio clinico.</p>
+        </div>
+        <div style={{display:"flex",gap:8, alignItems:"center"}}>
+          <label className="switch">
+            <input type="checkbox" checked={concisa} onChange={e=>setConcisa(e.target.checked)}/>
+            <span>Modalità concisa</span>
+          </label>
+          <button className="btn" onClick={()=>{ setFeatures(defaultFeatures()); setNote(""); }}>Reset</button>
+        </div>
+      </div>
+
+      <nav className="tabs">
+        {["paz","morf","t1","t2","dwi","din","hbp"].map(t => (
+          <button key={t} className={"tab " + (tab===t ? "active" : "")} onClick={()=>setTab(t)}>
+            {t==="paz"?"Paziente":t==="morf"?"Morfologia":t==="t1"?"T1":t==="t2"?"T2":t==="dwi"?"DWI":"Hepato/CE"}
+          </button>
+        ))}
+      </nav>
+
+      <section className={tab==="paz"?"":"hidden"}>
+        <div className="card">
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+            <span className="badge">Non cirrotico</span>
+            {features.contestoOncologico && <span className="badge">Contesto oncologico</span>}
+            {features.HBP_disponibile && <span className="badge">HBP disponibile</span>}
+          </div>
+          <Row label="Età"><input className="input" type="number" value={features.eta} onChange={e=>setF("eta", Number(e.target.value))}/></Row>
+          <Row label="Sesso">
+            <select className="input" value={features.sesso} onChange={e=>setF("sesso", e.target.value)}>
+              <option value="M">M</option><option value="F">F</option>
+            </select>
+          </Row>
+          <Row label="Contesto oncologico noto"><label className="checkline"><input type="checkbox" checked={features.contestoOncologico} onChange={e=>setF("contestoOncologico", e.target.checked)}/> Neoplasia extraepatica nota</label></Row>
+          <Row label="Febbre/Leucocitosi"><label className="checkline"><input type="checkbox" checked={features.febbreLeucocitosi} onChange={e=>setF("febbreLeucocitosi", e.target.checked)}/> Sospetto infettivo</label></Row>
+          <Row label="Dolore addominale"><label className="checkline"><input type="checkbox" checked={features.dolore} onChange={e=>setF("dolore", e.target.checked)}/> Clinica compatibile</label></Row>
+          <Row label="ALT/ALP elevate"><label className="checkline"><input type="checkbox" checked={features.ALT_ALP_alte} onChange={e=>setF("ALT_ALP_alte", e.target.checked)}/> Citocolestasi</label></Row>
+        </div>
+      </section>
+
+      <section className={tab==="morf"?"":"hidden"}>
+        <div className="card">
+          <Row label="Dimensioni (mm)"><input className="input" type="number" value={features.dimensioni_mm} onChange={e=>setF("dimensioni_mm", Number(e.target.value))}/></Row>
+          <Row label="Numero lesioni">
+            <select className="input" value={features.numero_lesioni} onChange={e=>setF("numero_lesioni", e.target.value)}>
+              <option value="singola">Singola</option><option value="multiple">Multiple</option>
+            </select>
+          </Row>
+          <Row label="Grasso intralesionale"><label className="checkline"><input type="checkbox" checked={features.grasso_intralesionale} onChange={e=>setF("grasso_intralesionale", e.target.checked)}/> Caduta OOP / IP</label></Row>
+          <Row label="Emorragia / contenuto proteico"><label className="checkline"><input type="checkbox" checked={features.emorragia} onChange={e=>setF("emorragia", e.target.checked)}/> Alto T1 / livelli</label></Row>
+          <Row label="Calcificazioni (TC)"><label className="checkline"><input type="checkbox" checked={features.calcificazioni} onChange={e=>setF("calcificazioni", e.target.checked)}/> Presenti</label></Row>
+        </div>
+      </section>
+
+      <section className={tab==="t1"?"":"hidden"}>
+        <div className="card grid grid-2">
+          <label className="checkline"><input type="checkbox" checked={features.T1_ipointensa} onChange={e=>setF("T1_ipointensa", e.target.checked)}/> T1 ipointensa (solido/necrosi)</label>
+          <label className="checkline"><input type="checkbox" checked={features.T1_iperintensa} onChange={e=>setF("T1_iperintensa", e.target.checked)}/> T1 iperintensa (grasso/emorragia/proteine)</label>
+          <label className="checkline"><input type="checkbox" checked={features.T1_drop_fatsat} onChange={e=>setF("T1_drop_fatsat", e.target.checked)}/> Caduta IP/OOP (grasso)</label>
+          <label className="checkline"><input type="checkbox" checked={features.T1_emorragia} onChange={e=>setF("T1_emorragia", e.target.checked)}/> Evidenza di emorragia</label>
+        </div>
+      </section>
+
+      <section className={tab==="t2"?"":"hidden"}>
+        <div className="card grid grid-2">
+          <label className="checkline"><input type="checkbox" checked={features.T2_molto_iperintensa} onChange={e=>{ setF("T2_molto_iperintensa", e.target.checked); if(e.target.checked) setF("T2_moderata", false); }}/> T2 molto iperintensa</label>
+          <label className="checkline"><input type="checkbox" checked={features.T2_moderata} onChange={e=>{ setF("T2_moderata", e.target.checked); if(e.target.checked) setF("T2_molto_iperintensa", false); }}/> T2 moderata</label>
+          <label className="checkline"><input type="checkbox" checked={features.T2_ipointensa_fibrosa} onChange={e=>setF("T2_ipointensa_fibrosa", e.target.checked)}/> T2 ipointensa (fibrosi)</label>
+          <label className="checkline"><input type="checkbox" checked={features.T2_alone_periferico} onChange={e=>setF("T2_alone_periferico", e.target.checked)}/> Alone periferico iperintenso</label>
+        </div>
+      </section>
+
+      <section className={tab==="dwi"?"":"hidden"}>
+        <div className="card grid grid-2">
+          <label className="checkline"><input type="checkbox" checked={features.DWI_restrizione} onChange={e=>setF("DWI_restrizione", e.target.checked)}/> Restrizione DWI solida</label>
+          <label className="checkline"><input type="checkbox" checked={features.DWI_rim} onChange={e=>setF("DWI_rim", e.target.checked)}/> Restrizione periferica (rim)</label>
+        </div>
+      </section>
+
+      <section className={tab==="din"?"":"hidden"}>
+        <div className="card grid grid-3">
+          <label className="checkline"><input type="checkbox" checked={features.APHE_nonRim} onChange={e=>setF("APHE_nonRim", e.target.checked)}/> APHE non-rim (centrale/omogeneo)</label>
+          <label className="checkline"><input type="checkbox" checked={features.APHE_rim} onChange={e=>setF("APHE_rim", e.target.checked)}/> APHE a rim (periferico)</label>
+          <label className="checkline"><input type="checkbox" checked={features.washout} onChange={e=>setF("washout", e.target.checked)}/> Washout portale/tardiva</label>
+          <label className="checkline"><input type="checkbox" checked={features.capsula} onChange={e=>setF("capsula", e.target.checked)}/> Capsula tardiva</label>
+          <label className="checkline"><input type="checkbox" checked={features.rim_enhancement} onChange={e=>setF("rim_enhancement", e.target.checked)}/> Rim enhancement (non necessariamente arterioso)</label>
+          <label className="checkline"><input type="checkbox" checked={features.progressivo_fillin} onChange={e=>setF("progressivo_fillin", e.target.checked)}/> Fill-in progressivo (centripeto)</label>
+          <label className="checkline"><input type="checkbox" checked={features.centrale_scar} onChange={e=>setF("centrale_scar", e.target.checked)}/> Cicatrice centrale</label>
+          <label className="checkline"><input type="checkbox" checked={features.targetoid} onChange={e=>setF("targetoid", e.target.checked)}/> Aspetto targetoid</label>
+          <label className="checkline"><input type="checkbox" checked={features.tardivo_fibroso} onChange={e=>setF("tardivo_fibroso", e.target.checked)}/> Impregnamento ritardato fibroso</label>
+          <label className="checkline"><input type="checkbox" checked={features.persistenza_tardiva} onChange={e=>setF("persistenza_tardiva", e.target.checked)}/> Persistenza enhancement tardivo</label>
+        </div>
+      </section>
+
+      <section className={tab==="hbp"?"":"hidden"}>
+        <div className="card grid grid-2">
+          <label className="checkline"><input type="checkbox" checked={features.HBP_disponibile} onChange={e=>setF("HBP_disponibile", e.target.checked)}/> HBP disponibile (gadoxetato)</label>
+          <label className="checkline"><input type="checkbox" disabled={!features.HBP_disponibile} checked={features.HBP_iso_iperdiffusa} onChange={e=>{ setF("HBP_iso_iperdiffusa", e.target.checked); if(e.target.checked) setF("HBP_ipointensa", false); }}/> HBP iso/iperintensa</label>
+          <label className="checkline"><input type="checkbox" disabled={!features.HBP_disponibile} checked={features.HBP_ipointensa} onChange={e=>{ setF("HBP_ipointensa", e.target.checked); if(e.target.checked) setF("HBP_iso_iperdiffusa", false); }}/> HBP ipointensa</label>
+        </div>
+      </section>
+
+      <div className="grid" style={{marginTop:16}}>
+        <div className="card">
+          <h2 style={{margin:0, fontSize:18}}>Diagnosi mostrate {concisa ? "(concisa)" : "(completa)"}</h2>
+          <ul className="clean">
+            {topShown.map(([k, p]) => (
+              <li key={k}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span className="badge" style={{border:"none", background:"#ecfeff", color:"#0f766e"}}>{p}%</span>
+                  <span>{LABELS[k]}</span>
+                </div>
+                <div className="progress"><div style={{width: `${p}%`}}/></div>
+              </li>
+            ))}
+          </ul>
+          <p className="help">Modalità concisa: max 2 diagnosi ≥25% (altrimenti solo la principale). Le entità rare compaiono solo se i pattern sono fortemente compatibili.</p>
+        </div>
+
+        <div className="grid grid-2">
+          <div className="card">
+            <h2 style={{marginTop:0, fontSize:18}}>Conclusione suggerita</h2>
+            <textarea id="txtConclusione" className="input" readOnly style={{minHeight:120}} value={conclusione} />
+            <h3 style={{marginBottom:4, fontSize:16}}>Note personali</h3>
+            <textarea className="input" style={{minHeight:100}} value={note} onChange={e=>setNote(e.target.value)} placeholder="Annotazioni opzionali…"/>
+            <div style={{marginTop:8, display:"flex", gap:8}}>
+              <button className="btn primary" onClick={()=>{
+                const html = `<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1'><title>Lesioni epatiche – Fegato non cirrotico</title><style>body{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;max-width:900px;margin:24px auto;padding:0 16px}</style></head><body><h1>Lesioni epatiche – Fegato non cirrotico</h1><h2>Conclusione suggerita</h2><p>${conclusione}</p></body></html>`
+                const blob = new Blob([html], { type: "text/html" })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a"); a.href = url; a.download = "lesioni-epatiche-conclusione.html"; a.click(); URL.revokeObjectURL(url)
+              }}>Esporta conclusione</button>
+              <button className="btn" onClick={()=> navigator.clipboard && navigator.clipboard.writeText(document.getElementById('txtConclusione').value)}>Copia testo</button>
+            </div>
+          </div>
+
+          <div className="card">
+            <h2 style={{marginTop:0, fontSize:18}}>Promemoria pattern chiave</h2>
+            <div className="help">
+              <p><strong>Emangioma:</strong> T2 molto alta, noduli periferici con fill-in, persistenza tardiva, no washout.</p>
+              <p><strong>FNH:</strong> APHE non-rim, HBP iso/iper, cicatrice centrale, no washout.</p>
+              <p><strong>HCC (non cirrotico):</strong> APHE non-rim + washout + capsula/tardivo fibroso.</p>
+              <p><strong>Metastasi/ICC:</strong> rim/targetoid, DWI rim, HBP ipointensa; ICC con ritardato fibroso.</p>
+              <p><strong>SNN:</strong> singola piccola, T1 bassa, alone T2, rim enhancement sottile, calcificazioni possibili.</p>
+              <p><strong>HEHE:</strong> multiple, targetoid, rim enhancement, HBP ipointensa, DWI rim.</p>
+              <p><strong>PEComa:</strong> singola ipervascolare con grasso (drop OOP), HBP ipointensa.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer className="footer">
+        © {new Date().getFullYear()} – Strumento di supporto decisionale. Non fornisce diagnosi definitive.
+      </footer>
+    </div>
+  )
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+  </script>
+</body>
+</html>
