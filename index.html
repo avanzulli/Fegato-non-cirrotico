@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fegato non cirrotico — Diagnosi RM (v2)</title>
+  <title>Fegato non cirrotico — Diagnosi RM (v2.1)</title>
   <meta name="description" content="Helper diagnostico per lesioni focali epatiche in fegato non cirrotico basato su caratteristiche RM/MDCE e fase epatobiliare.">
   <style>
     :root {
@@ -36,10 +36,10 @@
     }
     header h1 { margin: 0; font-size: 20px; letter-spacing: 0.2px; }
     header p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
-    main { max-width: 1100px; margin: 0 auto; padding: 20px 16px 80px; }
+    main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 80px; }
     .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 980px) {
-      .grid { grid-template-columns: 1.2fr 1fr; }
+    @media (min-width: 1100px) {
+      .grid { grid-template-columns: 1.25fr 1fr; }
     }
     .card {
       background: var(--panel);
@@ -87,12 +87,11 @@
     .list li { margin: 6px 0; }
     footer { text-align: center; color: var(--muted); font-size: 12px; padding: 30px 0; }
     .pill { font-size: 11px; background: #0f1726; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
-    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; padding: 2px 6px; border-radius: 6px; background: #0f1726; border: 1px solid var(--border); color: var(--muted); }
   </style>
 </head>
 <body>
   <header>
-    <h1>Fegato non cirrotico — Diagnosi RM (v2)</h1>
+    <h1>Fegato non cirrotico — Diagnosi RM (v2.1)</h1>
     <p>Helper interattivo per la caratterizzazione delle lesioni focali epatiche. Nessun dato inviato al server: tutto in locale.</p>
   </header>
 
@@ -111,6 +110,26 @@
             <option value="solitary">Singola</option>
             <option value="few">Oligo (&le;5)</option>
             <option value="many">Multiple diffuse</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <div class="label">Morfologia</div>
+          <select id="morphology">
+            <option value="nodule">Nodulare/rotonda</option>
+            <option value="lobulated">Polilobulata / C-shape</option>
+            <option value="elongated">Allungata (mima dotti)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">Sede</div>
+          <select id="site">
+            <option value="unspecified">Non specificata</option>
+            <option value="right-subcapsular">Lobo destro subcapsulare</option>
+            <option value="left">Lobo sinistro</option>
+            <option value="central">Centrale / vicino a vasi</option>
           </select>
         </div>
       </div>
@@ -142,9 +161,9 @@
         <div class="field">
           <div class="label">DWI/ADC</div>
           <select id="dwi">
-            <option value="none">Nessuna restrizione</option>
+            <option value="none">Nessuna restrizione (ADC alto)</option>
             <option value="rim">Restrizione periferica ("rim")</option>
-            <option value="marked">Restrizione marcata</option>
+            <option value="marked">Restrizione marcata (ADC basso)</option>
           </select>
         </div>
         <div class="field">
@@ -182,7 +201,7 @@
 
       <div class="row">
         <div class="field">
-          <div class="label">Fase epatobiliare (gadoxetato)</div>
+          <div class="label">Fase epatobiliare</div>
           <select id="hbp">
             <option value="unknown">Non eseguita</option>
             <option value="hyper">Iper/isointensa</option>
@@ -191,6 +210,17 @@
           </select>
         </div>
         <div class="field">
+          <div class="label">Agente epatospecifico</div>
+          <select id="agent">
+            <option value="none">Non eseguita / non noto</option>
+            <option value="EOB">Gd-EOB-DTPA</option>
+            <option value="BOPTA">Gd-BOPTA</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
           <div class="label">Cicatrice centrale</div>
           <select id="scar">
             <option value="no">Assente</option>
@@ -198,9 +228,6 @@
             <option value="t2-dark">T2 ipo/non tipica</option>
           </select>
         </div>
-      </div>
-
-      <div class="row">
         <div class="field">
           <div class="label">Contesto clinico</div>
           <select id="context">
@@ -208,16 +235,29 @@
             <option value="nafld">NAFLD/NASH</option>
             <option value="oncology">Paziente oncologico</option>
             <option value="ocp">F (>25 aa) con OCP</option>
-            <option value="male">M giovane (<40 aa)</option>
+            <option value="male">M giovane (&lt;40 aa)</option>
           </select>
         </div>
+      </div>
+
+      <div class="row">
         <div class="field">
-          <div class="label">Altri segni</div>
+          <div class="label">Segni accessori</div>
           <select id="misc">
             <option value="none">Nessuno</option>
             <option value="bile-ducts">Dilat. duttale/perilesionale</option>
             <option value="hemorrhage">Sangue/recenti emorragie</option>
             <option value="fat">Grasso intralesionale marcato</option>
+            <option value="calcification">Calcificazioni (TC/US)</option>
+          </select>
+        </div>
+        <div class="field">
+          <div class="label">PET/CT (se eseguita)</div>
+          <select id="pet">
+            <option value="na">Non eseguita</option>
+            <option value="hypo">Ipometabolismo</option>
+            <option value="peripheral-hot">Captazione periferica</option>
+            <option value="hot">Ipermetabolismo</option>
           </select>
         </div>
       </div>
@@ -244,12 +284,12 @@
   </main>
 
   <footer>
-    <span class="pill">v2 • Aggiornata per pattern RM di angioma, FNH, adenoma (subtipi), metastasi, ICC, EHE, PEComa, nodulo necrotico solitario, HCC (non cirrotico)</span>
+    <span class="pill">v2.1 • SNNL integrato (morfologia, DWI, HBP con EOB vs BOPTA, follow-up, evoluzione calcifica). </span>
   </footer>
 
   <script>
     const $ = (sel) => document.querySelector(sel);
-    const fields = ["size","multiplicity","t2","t1","dwi","arterial","delay","capsule","hbp","scar","context","misc"];
+    const fields = ["size","multiplicity","morphology","site","t2","t1","dwi","arterial","delay","capsule","hbp","agent","scar","context","misc","pet"];
     const weights = {
       "Angioma": 0, "FNH": 0, "Adenoma": 0, "Metastasi": 0, "Colangiocarcinoma": 0,
       "HCC (non cirrotico)": 0, "EHE": 0, "PEComa": 0, "Nodulo necrotico solitario": 0, "Cisti semplice": 0
@@ -289,17 +329,18 @@
         const el = $("#" + id);
         const label = el.previousElementSibling?.textContent || id;
         const val = el.options ? el.options[el.selectedIndex].text : el.value;
-        if (val && val !== "Non eseguita" && val !== "Assente" && val !== "Nessuno" && val !== "") {
+        if (val && !["Non eseguita","Assente","Nessuno","Non eseguita / non noto","Non specificata","Singola"].includes(val) && val !== "") {
           chips.appendChild(chip(label + ": " + val));
         }
       });
     }
 
     function score(){
-      // Copy base weights
       const s = Object.assign({}, weights);
       const size = parseInt($("#size").value || "0", 10);
       const mult = $("#multiplicity").value;
+      const morph = $("#morphology").value;
+      const site = $("#site").value;
       const t2 = $("#t2").value;
       const t1 = $("#t1").value;
       const dwi = $("#dwi").value;
@@ -307,20 +348,21 @@
       const del = $("#delay").value;
       const cap = $("#capsule").value;
       const hbp = $("#hbp").value;
+      const agent = $("#agent").value;
       const scar = $("#scar").value;
       const ctx = $("#context").value;
       const misc = $("#misc").value;
+      const pet = $("#pet").value;
 
-      // Heuristics rooted in classic MR patterns
-      // Cyst
-      if (t2 === "very-high" && art === "none" && del === "none" && hbp !== "target-hbp" && dwi !== "marked") s["Cisti semplice"] += 7;
+      // Cisti
+      if (t2 === "very-high" && art === "none" && del === "none" && dwi !== "marked") s["Cisti semplice"] += 7;
 
-      // Hemangioma
+      // Angioma
       if (t2 === "very-high") s["Angioma"] += 3;
       if (art === "peripheral-nodular") s["Angioma"] += 4;
       if (del === "progressive-fill-in") s["Angioma"] += 4;
       if (del === "persistent") s["Angioma"] += 2;
-      if (cap === "retraction") s["Angioma"] -= 2; // incongruo
+      if (cap === "retraction") s["Angioma"] -= 2;
 
       // FNH
       if (art === "homogeneous" && del === "persistent") s["FNH"] += 4;
@@ -329,14 +371,14 @@
       if (hbp === "hypo") s["FNH"] -= 2;
       if (mult !== "solitary") s["FNH"] -= 1;
 
-      // Adenoma (considering H-H, I-H, β-catenina, infiammatorio)
+      // Adenoma
       if (ctx === "ocp" || t1 === "fat" || misc === "hemorrhage") s["Adenoma"] += 3;
       if (art === "homogeneous") s["Adenoma"] += 2;
       if (hbp === "hypo") s["Adenoma"] += 3;
       if (dwi === "none") s["Adenoma"] += 1;
-      if (scar === "t2-bright-delayed") s["Adenoma"] -= 2; // contro FNH
+      if (scar === "t2-bright-delayed") s["Adenoma"] -= 2;
 
-      // Metastases
+      // Metastasi
       if (mult !== "solitary") s["Metastasi"] += 3;
       if (art === "rim" || art === "target") s["Metastasi"] += 3;
       if (dwi !== "none") s["Metastasi"] += 2;
@@ -349,7 +391,7 @@
       if (t2 === "mild-high" || t2 === "target") s["Colangiocarcinoma"] += 1;
       if (misc === "bile-ducts") s["Colangiocarcinoma"] += 3;
 
-      // HCC (rare in non-cirrhotic but possible)
+      // HCC (non-cirrotico)
       if (art === "homogeneous" && del === "washout") s["HCC (non cirrotico)"] += 3;
       if (cap === "capsule") s["HCC (non cirrotico)"] += 2;
       if (hbp === "hypo") s["HCC (non cirrotico)"] += 1;
@@ -367,11 +409,27 @@
       if (art === "homogeneous" && del === "persistent") s["PEComa"] += 1;
       if (hbp === "hypo") s["PEComa"] += 1;
 
-      // Solitary necrotic nodule (SNN)
-      if (t1 === "low" && t2 === "iso" && dwi === "rim" && art === "none" && del === "none") s["Nodulo necrotico solitario"] += 4;
-      if (size > 30) s["Nodulo necrotico solitario"] -= 1;
+      // SNNL
+      if (t1 === "low") s["Nodulo necrotico solitario"] += 1;
+      if (t2 === "low") s["Nodulo necrotico solitario"] += 3;
+      if (t2 === "mild-high") s["Nodulo necrotico solitario"] += 1;
+      if (dwi === "none") s["Nodulo necrotico solitario"] += 3;
+      if (art === "none") s["Nodulo necrotico solitario"] += 2;
+      if (art === "rim") s["Nodulo necrotico solitario"] += 1;
+      if (del === "none") s["Nodulo necrotico solitario"] += 2;
+      if (del === "persistent") s["Nodulo necrotico solitario"] += 1;
+      if (morph === "lobulated" || morph === "elongated") s["Nodulo necrotico solitario"] += 2;
+      if (site === "right-subcapsular") s["Nodulo necrotico solitario"] += 1;
+      if (misc === "calcification") s["Nodulo necrotico solitario"] += 2;
+      if (hbp === "hypo" && agent === "EOB") s["Nodulo necrotico solitario"] += 1;
+      if (hbp === "hypo" && agent === "BOPTA") s["Nodulo necrotico solitario"] += 2;
+      if (pet === "hypo") s["Nodulo necrotico solitario"] += 1;
+      if (pet === "peripheral-hot") s["Nodulo necrotico solitario"] += 0.5;
+      if (dwi === "marked") s["Nodulo necrotico solitario"] -= 3;
+      if (del === "progressive-fibrous") s["Nodulo necrotico solitario"] -= 1;
+      if (mult !== "solitary") s["Nodulo necrotico solitario"] -= 2;
 
-      // Size/multiplicity nuance
+      // Size nuances
       if (size && size < 25 && s["Angioma"] > 0) s["Angioma"] += 1;
       if (size && size > 40 && del === "washout") s["HCC (non cirrotico)"] += 1;
       if (size && size > 30 && cap === "retraction") s["Colangiocarcinoma"] += 1;
@@ -382,7 +440,6 @@
     function rank(scores){
       const items = Object.entries(scores).map(([k,v]) => [k, v]);
       items.sort((a,b)=> b[1]-a[1]);
-      // Normalize to 0..100 for display
       const max = Math.max(1, items[0][1]);
       return items.map(([k,v]) => [k, Math.round(100 * v / max)]);
     }
@@ -397,10 +454,20 @@
         "HCC (non cirrotico)": "APHE + washout + capsula; più raro in fegato sano/NAFLD.",
         "EHE": "Segno a target, noduli periferici coalescenti, retrazione capsulare, enhancement progressivo.",
         "PEComa": "APHE intenso, possibile grasso, HBP ipointensa.",
-        "Nodulo necrotico solitario": "Assenza di enhancement, possibile rim DWI, contesto reattivo.",
+        "Nodulo necrotico solitario": "T1 basso, T2 basso (± lieve alto), nessuna restrizione DWI, nessun enhancement interno; possibile tenue periferico/capsulare. HBP: con EOB capsula ipo; con BOPTA capsula iper/isointensa. Morfologia spesso polilobulata/subcapsulare; possibili calcificazioni in follow-up.",
         "Cisti semplice": "T2 altissimo, nessun enhancement, pareti sottili."
       };
       return map[top] || "";
+    }
+
+    function snnlFollowUpHints(agent){
+      const hints = [];
+      hints.push("Se pattern tipico e clinica favorevole: preferire follow-up non invasivo (RM senza mdc / TC senza mdc per calcificazioni / US).");
+      hints.push("Attendere riduzione dimensionale nel tempo; possibili calcificazioni progressive (TC/US).");
+      if (agent === "EOB") hints.push("Con Gd-EOB-DTPA la capsula fibrosa resta ipointensa in HBP: la lesione può apparire leggermente più grande.");
+      if (agent === "BOPTA") hints.push("Con Gd-BOPTA la capsula fibrosa può impregnarsi (iper/isointensa) nelle fasi ritardate/HBP: la lesione può apparire più piccola.");
+      hints.push("PET/CT poco utile e potenzialmente fuorviante (captazione variabile).");
+      return hints;
     }
 
     function suggest(){
@@ -413,7 +480,6 @@
       if (!ranked.length){
         $("#result").innerHTML = "<span class='warn'>Pattern non dirimente</span>: aggiungere fase epatobiliare o CEUS, oppure follow-up/biopsia secondo contesto clinico.";
         $("#diffs").innerHTML = "";
-        pushNote("Questa è un'assistenza euristica, non una classificazione ufficiale. Usare giudizio clinico.");
         return;
       }
 
@@ -429,6 +495,13 @@
         diffs.appendChild(li);
       });
 
+      const agent = $("#agent").value;
+      const topIsSNNL = (topDx === "Nodulo necrotico solitario");
+      if (topIsSNNL){
+        snnlFollowUpHints(agent).forEach(pushNote);
+      } else {
+        pushNote("Questa è un'assistenza euristica, non una classificazione ufficiale. Usare giudizio clinico.");
+      }
       pushNote("Se HBP non eseguita: considerare gadoxetato per distinguere FNH (iso/iper) da adenoma/metastasi (ipo).");
       pushNote("Pattern di angioma richiesto: T2 'light-bulb' + nodulare periferico con fill-in centripeto.");
     }
